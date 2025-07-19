@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from './useAuth'
 import { useToast } from '@/hooks/use-toast'
 
-interface PaymentAccount {
+type PaymentAccount = {
   id: string
   user_id: string
   provider: string
