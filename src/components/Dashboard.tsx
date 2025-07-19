@@ -193,7 +193,7 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
                 <DollarSign className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-lg font-bold">${totalSpent.toFixed(2)}</p>
+                  <p className="text-lg font-bold">₹{totalSpent.toFixed(2)}</p>
                 </div>
               </div>
             </CardContent>
@@ -218,7 +218,7 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
               <Calendar className="w-5 h-5 text-warning" />
               <div>
                 <p className="text-sm text-muted-foreground">Average per Transaction</p>
-                <p className="text-lg font-bold">${averageTransaction.toFixed(2)}</p>
+                <p className="text-lg font-bold">₹{averageTransaction.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -277,7 +277,7 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
                       style={{ backgroundColor: colors[index % colors.length] }}
                     />
                     <span className="text-sm">{entry.name}</span>
-                    <span className="text-sm font-medium">${entry.value.toFixed(0)}</span>
+                    <span className="text-sm font-medium">₹{entry.value.toFixed(0)}</span>
                   </div>
                 ))}
               </div>
@@ -307,7 +307,7 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
                       <ArrowUp className="w-4 h-4 text-destructive" />
                     </div>
                     <div>
-                      <p className="font-medium">${transaction.amount.toFixed(2)}</p>
+                      <p className="font-medium">₹{transaction.amount.toFixed(2)}</p>
                       <p className="text-sm text-muted-foreground">
                         {transaction.date.toLocaleDateString()} • {transaction.source}
                       </p>

@@ -106,7 +106,7 @@ export const Analytics = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalAmount.toFixed(2)}</div>
+              <div className="text-2xl font-bold">₹{totalAmount.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 <TrendingUp className="inline h-3 w-3 mr-1" />
                 +2.1% from last {selectedPeriod}
@@ -134,7 +134,7 @@ export const Analytics = () => {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${averageTransaction.toFixed(2)}</div>
+              <div className="text-2xl font-bold">₹{averageTransaction.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 Per transaction
               </p>
@@ -148,7 +148,7 @@ export const Analytics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${Math.max(...transactions.map(t => t.amount), 0).toFixed(2)}
+                ₹{Math.max(...transactions.map(t => t.amount), 0).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
                 Single transaction
@@ -174,7 +174,7 @@ export const Analytics = () => {
                       <XAxis dataKey="date" className="text-xs" />
                       <YAxis className="text-xs" />
                       <Tooltip 
-                        formatter={(value) => [`$${value}`, 'Amount']}
+                        formatter={(value) => [`₹${value}`, 'Amount']}
                         labelStyle={{ color: 'hsl(var(--foreground))' }}
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--background))',
@@ -222,7 +222,7 @@ export const Analytics = () => {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value) => [`$${value}`, 'Amount']}
+                        formatter={(value) => [`₹${value}`, 'Amount']}
                         contentStyle={{ 
                           backgroundColor: 'hsl(var(--background))',
                           border: '1px solid hsl(var(--border))',
@@ -252,7 +252,7 @@ export const Analytics = () => {
                     <XAxis dataKey="date" className="text-xs" />
                     <YAxis className="text-xs" />
                     <Tooltip 
-                      formatter={(value) => [`$${value}`, 'Amount']}
+                      formatter={(value) => [`₹${value}`, 'Amount']}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid hsl(var(--border))',
