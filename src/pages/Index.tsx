@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import AccountLinking from '@/components/AccountLinking';
 import Dashboard from '@/components/Dashboard';
+import { TransactionHistory } from '@/components/TransactionHistory';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -69,9 +70,12 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="pt-16"
+        className="pt-16 p-6"
       >
-        <Dashboard onSettingsClick={handleShowSettings} />
+        <div className="space-y-8">
+          <Dashboard onSettingsClick={handleShowSettings} />
+          <TransactionHistory />
+        </div>
       </motion.div>
     </div>
   );

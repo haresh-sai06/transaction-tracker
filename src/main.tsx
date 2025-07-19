@@ -1,6 +1,8 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
 import './index.css'
+import App from './App.tsx'
+import { ThemeProvider } from './components/ThemeProvider'
 
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {
@@ -15,4 +17,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <ThemeProvider defaultTheme="light" storageKey="expense-tracker-theme">
+      <App />
+    </ThemeProvider>
+  </StrictMode>
+);

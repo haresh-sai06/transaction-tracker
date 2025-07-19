@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 
 const menuItems = [
@@ -97,6 +98,7 @@ export const Navigation = () => {
           </div>
           
           <div className="flex items-center space-x-2">
+            <ThemeToggle />
             <motion.div
               className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"
               whileHover={{ scale: 1.1 }}

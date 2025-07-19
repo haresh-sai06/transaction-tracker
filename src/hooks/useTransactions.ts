@@ -72,7 +72,7 @@ export const useTransactions = () => {
     }
   }
 
-  const addTransaction = async (amount: number, currency: string = 'USD', source: string = 'manual') => {
+  const addTransaction = async (amount: number, currency: string = 'INR', source: string = 'manual') => {
     try {
       const { data, error } = await supabase
         .from('transactions')
@@ -92,7 +92,7 @@ export const useTransactions = () => {
 
       toast({
         title: "Transaction added",
-        description: `$${amount.toFixed(2)} expense recorded`,
+        description: `₹${amount.toFixed(2)} expense recorded`,
       })
 
       return { data, error: null }
@@ -155,11 +155,35 @@ export const useTransactions = () => {
     return transactions.filter(t => new Date(t.date) >= startDate)
   }
 
+  const updateTransaction = async (id: string, updates: { category_id?: string | null }) => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      return { data, error: null }
+    } catch (error) {
+      console.error('Error updating transaction:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update transaction",
+        variant: "destructive",
+      })
+      return { data: null, error }
+    }
+  }
+
   return {
     transactions,
     loading,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
     getTransactionsByPeriod,
     refreshTransactions: fetchTransactions,
   }
