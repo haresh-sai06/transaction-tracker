@@ -19,6 +19,7 @@ const currencies = [
   { value: 'CAD', label: 'Canadian Dollar (C$)', symbol: 'C$' },
   { value: 'AUD', label: 'Australian Dollar (A$)', symbol: 'A$' },
   { value: 'JPY', label: 'Japanese Yen (¥)', symbol: '¥' },
+  { value: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
 ]
 
 export const Profile = () => {

@@ -152,7 +152,7 @@ export const Trends = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${currentTotal.toFixed(2)}</div>
+              <div className="text-2xl font-bold">₹{currentTotal.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 {currentTransactions.length} transactions
               </p>
@@ -185,7 +185,7 @@ export const Trends = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${(currentTotal / Math.max(trendData.length, 1)).toFixed(2)}
+                ₹{(currentTotal / Math.max(trendData.length, 1)).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
                 Per active day
@@ -200,7 +200,7 @@ export const Trends = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ${(currentTotal * 1.1).toFixed(2)}
+                ₹{(currentTotal * 1.1).toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground">
                 Next {selectedPeriod} estimate
@@ -343,7 +343,7 @@ export const Trends = () => {
                         current.amount > max.amount ? current : max
                       ).day}
                     </span>
-                    {' '}with an average of $
+                    {' '}with an average of ₹
                     {Math.max(...orderedWeeklyPattern.map(p => p.amount)).toFixed(2)} per transaction.
                   </p>
                 </div>
@@ -361,7 +361,7 @@ export const Trends = () => {
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <h4 className="font-medium mb-2">🎯 Recommendations</h4>
                   <p className="text-sm text-muted-foreground">
-                    Based on your patterns, consider setting a daily spending limit of $
+                    Based on your patterns, consider setting a daily spending limit of ₹
                     {(currentTotal / Math.max(trendData.length, 1) * 0.9).toFixed(2)} to reduce monthly expenses by 10%.
                   </p>
                 </div>

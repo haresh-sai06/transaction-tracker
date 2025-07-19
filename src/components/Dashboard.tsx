@@ -4,7 +4,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  DollarSign, 
   TrendingUp, 
   Calendar, 
   CreditCard, 
@@ -14,6 +13,8 @@ import {
   ArrowDown,
   Download
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRupeeSign } from '@fortawesome/free-solid-svg-icons';
 import TransactionImporter from './TransactionImporter';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
@@ -190,7 +191,7 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
-                <DollarSign className="w-5 h-5 text-primary" />
+                <FontAwesomeIcon icon={faRupeeSign} className="w-5 h-5 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Total Spent</p>
                   <p className="text-lg font-bold">₹{totalSpent.toFixed(2)}</p>
