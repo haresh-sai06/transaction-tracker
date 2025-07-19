@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import type { Tables } from '@/integrations/supabase/types'
 import { useAuth } from './useAuth'
 import { useToast } from '@/hooks/use-toast'
 
-type Transaction = {
-  id: string
-  user_id: string
-  amount: number
-  currency: string
-  date: string
-  source: string
-  created_at: string
-  updated_at: string
-}
+type Transaction = Tables<'transactions'>
 
 export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([])
