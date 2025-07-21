@@ -99,13 +99,15 @@ export const Navigation = () => {
           
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <motion.div
-              className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <User className="h-4 w-4 text-primary" />
-            </motion.div>
+            <Link to="/profile">
+              <motion.div
+                className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <User className="h-4 w-4 text-primary" />
+              </motion.div>
+            </Link>
           </div>
         </div>
       </motion.header>
