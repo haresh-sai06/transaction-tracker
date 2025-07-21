@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -9,9 +9,12 @@ import {
   CheckCircle, 
   AlertCircle, 
   Loader2,
-  RefreshCw
+  RefreshCw,
+  CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRazorpaySync } from '@/hooks/useRazorpaySync';
+import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 
 interface ImportSource {
   id: string;
@@ -23,38 +26,54 @@ interface ImportSource {
 
 const TransactionImporter = () => {
   const { toast } = useToast();
-  const [sources, setSources] = useState<ImportSource[]>([
-    {
-      id: 'paypal',
-      name: 'PayPal',
-      status: 'connected',
-      lastSync: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
-      transactionsFound: 3
-    },
-    {
-      id: 'venmo',
-      name: 'Venmo SMS',
-      status: 'syncing',
-      lastSync: new Date(Date.now() - 2 * 60 * 1000), // 2 minutes ago
-      transactionsFound: 1
-    },
-    {
-      id: 'googlepay',
-      name: 'Google Pay',
-      status: 'connected',
-      lastSync: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
-      transactionsFound: 0
-    },
-    {
-      id: 'cashapp',
-      name: 'Cash App SMS',
-      status: 'error',
-      lastSync: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
-      transactionsFound: 0
-    }
-  ]);
-
+  const { accounts, loading: accountsLoading, refreshAccounts } = usePaymentAccounts();
+  const { isLoading: syncLoading, syncRazorpayTransactions, setupRazorpayAccount } = useRazorpaySync();
+  
+  const [sources, setSources] = useState<ImportSource[]>([]);
   const [syncProgress, setSyncProgress] = useState(0);
+
+  useEffect(() => {
+    const initializeSources = () => {
+      const razorpayAccount = accounts.find(acc => acc.provider === 'razorpay');
+      
+      const initialSources: ImportSource[] = [
+        {
+          id: 'razorpay',
+          name: 'Razorpay',
+          status: razorpayAccount ? 'connected' : 'offline',
+          lastSync: razorpayAccount?.last_sync ? new Date(razorpayAccount.last_sync) : new Date(),
+          transactionsFound: 0
+        },
+        {
+          id: 'phonepe',
+          name: 'PhonePe SMS',
+          status: 'offline',
+          lastSync: new Date(Date.now() - 30 * 60 * 1000),
+          transactionsFound: 0
+        },
+        {
+          id: 'googlepay',
+          name: 'Google Pay SMS',
+          status: 'offline',
+          lastSync: new Date(Date.now() - 15 * 60 * 1000),
+          transactionsFound: 0
+        },
+        {
+          id: 'paytm',
+          name: 'Paytm SMS',
+          status: 'offline',
+          lastSync: new Date(Date.now() - 45 * 60 * 1000),
+          transactionsFound: 0
+        }
+      ];
+      
+      setSources(initialSources);
+    };
+
+    if (!accountsLoading) {
+      initializeSources();
+    }
+  }, [accounts, accountsLoading]);
 
   const getStatusIcon = (status: ImportSource['status']) => {
     switch (status) {
@@ -83,45 +102,102 @@ const TransactionImporter = () => {
   };
 
   const syncSource = async (sourceId: string) => {
-    setSources(prev => 
-      prev.map(source => 
-        source.id === sourceId 
-          ? { ...source, status: 'syncing' as const }
-          : source
-      )
-    );
-
-    // Simulate sync process
-    setSyncProgress(0);
-    const interval = setInterval(() => {
-      setSyncProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
+    if (sourceId === 'razorpay') {
+      // Handle Razorpay sync
+      const razorpayAccount = accounts.find(acc => acc.provider === 'razorpay');
+      
+      if (!razorpayAccount) {
+        // Setup Razorpay account first
+        try {
+          await setupRazorpayAccount();
+          await refreshAccounts();
+        } catch (error) {
+          setSources(prev => 
+            prev.map(source => 
+              source.id === sourceId 
+                ? { ...source, status: 'error' as const }
+                : source
+            )
+          );
+          return;
         }
-        return prev + 20;
+      }
+
+      setSources(prev => 
+        prev.map(source => 
+          source.id === sourceId 
+            ? { ...source, status: 'syncing' as const }
+            : source
+        )
+      );
+
+      try {
+        const result = await syncRazorpayTransactions();
+        
+        setSources(prev => 
+          prev.map(source => 
+            source.id === sourceId 
+              ? { 
+                  ...source, 
+                  status: 'connected' as const,
+                  lastSync: new Date(),
+                  transactionsFound: result.synced || 0
+                }
+              : source
+          )
+        );
+      } catch (error) {
+        setSources(prev => 
+          prev.map(source => 
+            source.id === sourceId 
+              ? { ...source, status: 'error' as const }
+              : source
+          )
+        );
+      }
+    } else {
+      // Handle SMS-based sources (placeholder for future implementation)
+      setSources(prev => 
+        prev.map(source => 
+          source.id === sourceId 
+            ? { ...source, status: 'syncing' as const }
+            : source
+        )
+      );
+
+      // Simulate sync process for SMS sources
+      setSyncProgress(0);
+      const interval = setInterval(() => {
+        setSyncProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 20;
+        });
+      }, 300);
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      setSources(prev => 
+        prev.map(source => 
+          source.id === sourceId 
+            ? { 
+                ...source, 
+                status: 'offline' as const, // SMS parsing not yet implemented
+                lastSync: new Date(),
+                transactionsFound: 0
+              }
+            : source
+        )
+      );
+
+      toast({
+        title: 'SMS Sync Not Available',
+        description: `${sources.find(s => s.id === sourceId)?.name} SMS parsing coming soon`,
+        variant: "default",
       });
-    }, 300);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    setSources(prev => 
-      prev.map(source => 
-        source.id === sourceId 
-          ? { 
-              ...source, 
-              status: 'connected' as const,
-              lastSync: new Date(),
-              transactionsFound: Math.floor(Math.random() * 5)
-            }
-          : source
-      )
-    );
-
-    toast({
-      title: 'Sync Complete',
-      description: `Successfully synced with ${sources.find(s => s.id === sourceId)?.name}`,
-    });
+    }
   };
 
   const syncAll = async () => {
@@ -149,7 +225,11 @@ const TransactionImporter = () => {
             <div key={source.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Smartphone className="w-5 h-5 text-muted-foreground" />
+                  {source.id === 'razorpay' ? (
+                    <CreditCard className="w-5 h-5 text-muted-foreground" />
+                  ) : (
+                    <Smartphone className="w-5 h-5 text-muted-foreground" />
+                  )}
                   <div>
                     <h3 className="font-medium">{source.name}</h3>
                     <p className="text-sm text-muted-foreground">
