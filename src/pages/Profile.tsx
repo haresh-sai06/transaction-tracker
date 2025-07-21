@@ -13,12 +13,6 @@ import { useToast } from '@/hooks/use-toast'
 import { User, Mail, Shield, Globe, Camera, Save } from 'lucide-react'
 
 const currencies = [
-  { value: 'USD', label: 'US Dollar ($)', symbol: '$' },
-  { value: 'EUR', label: 'Euro (€)', symbol: '€' },
-  { value: 'GBP', label: 'British Pound (£)', symbol: '£' },
-  { value: 'CAD', label: 'Canadian Dollar (C$)', symbol: 'C$' },
-  { value: 'AUD', label: 'Australian Dollar (A$)', symbol: 'A$' },
-  { value: 'JPY', label: 'Japanese Yen (¥)', symbol: '¥' },
   { value: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
 ]
 
@@ -29,7 +23,7 @@ export const Profile = () => {
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.full_name || '',
     email: user?.email || '',
-    preferredCurrency: 'USD',
+    preferredCurrency: 'INR',
     avatarUrl: user?.user_metadata?.avatar_url || '',
   })
 
