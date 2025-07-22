@@ -13,67 +13,91 @@ import {
   CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRazorpaySync } from '@/hooks/useRazorpaySync';
-import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
+import { useSMSParser } from '@/hooks/useSMSParser';
 
 interface ImportSource {
   id: string;
   name: string;
-  status: 'connected' | 'syncing' | 'error' | 'offline';
+  status: 'connected' | 'syncing' | 'error' | 'offline' | 'permission_needed';
   lastSync: Date;
   transactionsFound: number;
+  description: string;
 }
 
 const TransactionImporter = () => {
   const { toast } = useToast();
-  const { accounts, loading: accountsLoading, refreshAccounts } = usePaymentAccounts();
-  const { isLoading: syncLoading, syncRazorpayTransactions, setupRazorpayAccount } = useRazorpaySync();
+  const { 
+    isLoading: smsLoading, 
+    hasPermission, 
+    checkSMSPermission, 
+    requestSMSPermission, 
+    parseStoredSMS, 
+    setupSMSListener 
+  } = useSMSParser();
   
   const [sources, setSources] = useState<ImportSource[]>([]);
   const [syncProgress, setSyncProgress] = useState(0);
 
   useEffect(() => {
-    const initializeSources = () => {
-      const razorpayAccount = accounts.find(acc => acc.provider === 'razorpay');
+    const initializeSources = async () => {
+      await checkSMSPermission();
       
       const initialSources: ImportSource[] = [
         {
-          id: 'razorpay',
-          name: 'Razorpay',
-          status: razorpayAccount ? 'connected' : 'offline',
-          lastSync: razorpayAccount?.last_sync ? new Date(razorpayAccount.last_sync) : new Date(),
-          transactionsFound: 0
-        },
-        {
-          id: 'phonepe',
-          name: 'PhonePe SMS',
-          status: 'offline',
+          id: 'hdfc_sms',
+          name: 'HDFC Bank SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
           lastSync: new Date(Date.now() - 30 * 60 * 1000),
-          transactionsFound: 0
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from HDFC Bank SMS alerts'
         },
         {
-          id: 'googlepay',
-          name: 'Google Pay SMS',
-          status: 'offline',
-          lastSync: new Date(Date.now() - 15 * 60 * 1000),
-          transactionsFound: 0
-        },
-        {
-          id: 'paytm',
-          name: 'Paytm SMS',
-          status: 'offline',
+          id: 'sbi_sms',
+          name: 'SBI Bank SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
           lastSync: new Date(Date.now() - 45 * 60 * 1000),
-          transactionsFound: 0
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from SBI Bank SMS alerts'
+        },
+        {
+          id: 'icici_sms',
+          name: 'ICICI Bank SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
+          lastSync: new Date(Date.now() - 20 * 60 * 1000),
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from ICICI Bank SMS alerts'
+        },
+        {
+          id: 'gpay_sms',
+          name: 'Google Pay SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
+          lastSync: new Date(Date.now() - 15 * 60 * 1000),
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from Google Pay SMS notifications'
+        },
+        {
+          id: 'phonepe_sms',
+          name: 'PhonePe SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
+          lastSync: new Date(Date.now() - 25 * 60 * 1000),
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from PhonePe SMS notifications'
+        },
+        {
+          id: 'paytm_sms',
+          name: 'Paytm SMS',
+          status: hasPermission ? 'connected' : 'permission_needed',
+          lastSync: new Date(Date.now() - 35 * 60 * 1000),
+          transactionsFound: 0,
+          description: 'Parse UPI transactions from Paytm SMS notifications'
         }
       ];
       
       setSources(initialSources);
     };
 
-    if (!accountsLoading) {
-      initializeSources();
-    }
-  }, [accounts, accountsLoading]);
+    initializeSources();
+  }, [checkSMSPermission, hasPermission]);
 
   const getStatusIcon = (status: ImportSource['status']) => {
     switch (status) {
@@ -83,6 +107,8 @@ const TransactionImporter = () => {
         return <Loader2 className="w-4 h-4 text-info animate-spin" />;
       case 'error':
         return <AlertCircle className="w-4 h-4 text-destructive" />;
+      case 'permission_needed':
+        return <Smartphone className="w-4 h-4 text-warning" />;
       case 'offline':
         return <Wifi className="w-4 h-4 text-muted-foreground" />;
     }
@@ -96,115 +122,90 @@ const TransactionImporter = () => {
         return 'bg-info/10 text-info border-info/20';
       case 'error':
         return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'permission_needed':
+        return 'bg-warning/10 text-warning border-warning/20';
       case 'offline':
         return 'bg-muted text-muted-foreground';
     }
   };
 
   const syncSource = async (sourceId: string) => {
-    if (sourceId === 'razorpay') {
-      // Handle Razorpay sync
-      const razorpayAccount = accounts.find(acc => acc.provider === 'razorpay');
+    const source = sources.find(s => s.id === sourceId);
+    if (!source) return;
+
+    // Check if permission is needed
+    if (source.status === 'permission_needed') {
+      const granted = await requestSMSPermission();
+      if (!granted) return;
       
-      if (!razorpayAccount) {
-        // Setup Razorpay account first
-        try {
-          await setupRazorpayAccount();
-          await refreshAccounts();
-        } catch (error) {
-          setSources(prev => 
-            prev.map(source => 
-              source.id === sourceId 
-                ? { ...source, status: 'error' as const }
-                : source
-            )
-          );
-          return;
+      setSources(prev => 
+        prev.map(s => 
+          s.id === sourceId 
+            ? { ...s, status: 'connected' as const }
+            : s
+        )
+      );
+    }
+
+    // Start syncing
+    setSources(prev => 
+      prev.map(s => 
+        s.id === sourceId 
+          ? { ...s, status: 'syncing' as const }
+          : s
+      )
+    );
+
+    // Simulate sync progress
+    setSyncProgress(0);
+    const interval = setInterval(() => {
+      setSyncProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
         }
-      }
-
-      setSources(prev => 
-        prev.map(source => 
-          source.id === sourceId 
-            ? { ...source, status: 'syncing' as const }
-            : source
-        )
-      );
-
-      try {
-        const result = await syncRazorpayTransactions();
-        
-        setSources(prev => 
-          prev.map(source => 
-            source.id === sourceId 
-              ? { 
-                  ...source, 
-                  status: 'connected' as const,
-                  lastSync: new Date(),
-                  transactionsFound: result.synced || 0
-                }
-              : source
-          )
-        );
-      } catch (error) {
-        setSources(prev => 
-          prev.map(source => 
-            source.id === sourceId 
-              ? { ...source, status: 'error' as const }
-              : source
-          )
-        );
-      }
-    } else {
-      // Handle SMS-based sources (placeholder for future implementation)
-      setSources(prev => 
-        prev.map(source => 
-          source.id === sourceId 
-            ? { ...source, status: 'syncing' as const }
-            : source
-        )
-      );
-
-      // Simulate sync process for SMS sources
-      setSyncProgress(0);
-      const interval = setInterval(() => {
-        setSyncProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 20;
-        });
-      }, 300);
-
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setSources(prev => 
-        prev.map(source => 
-          source.id === sourceId 
-            ? { 
-                ...source, 
-                status: 'offline' as const, // SMS parsing not yet implemented
-                lastSync: new Date(),
-                transactionsFound: 0
-              }
-            : source
-        )
-      );
-
-      toast({
-        title: 'SMS Sync Not Available',
-        description: `${sources.find(s => s.id === sourceId)?.name} SMS parsing coming soon`,
-        variant: "default",
+        return prev + 25;
       });
+    }, 200);
+
+    try {
+      const result = await parseStoredSMS();
+      
+      setSources(prev => 
+        prev.map(s => 
+          s.id === sourceId 
+            ? { 
+                ...s, 
+                status: 'connected' as const,
+                lastSync: new Date(),
+                transactionsFound: result.parsed
+              }
+            : s
+        )
+      );
+    } catch (error) {
+      setSources(prev => 
+        prev.map(s => 
+          s.id === sourceId 
+            ? { ...s, status: 'error' as const }
+            : s
+        )
+      );
     }
   };
 
   const syncAll = async () => {
+    // First request permission if needed
+    if (!hasPermission) {
+      const granted = await requestSMSPermission();
+      if (!granted) return;
+    }
+
+    // Then sync all sources
     for (const source of sources.filter(s => s.status !== 'syncing')) {
       await syncSource(source.id);
       // Small delay between syncs
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
   };
 
@@ -213,10 +214,10 @@ const TransactionImporter = () => {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Transaction Import</CardTitle>
-            <Button onClick={syncAll} variant="outline" size="sm">
+            <CardTitle className="text-lg">SMS Transaction Tracking</CardTitle>
+            <Button onClick={syncAll} variant="outline" size="sm" disabled={smsLoading}>
               <RefreshCw className="w-4 h-4 mr-2" />
-              Sync All
+              Parse All SMS
             </Button>
           </div>
         </CardHeader>
@@ -225,14 +226,13 @@ const TransactionImporter = () => {
             <div key={source.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  {source.id === 'razorpay' ? (
-                    <CreditCard className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <Smartphone className="w-5 h-5 text-muted-foreground" />
-                  )}
+                  <Smartphone className="w-5 h-5 text-muted-foreground" />
                   <div>
                     <h3 className="font-medium">{source.name}</h3>
                     <p className="text-sm text-muted-foreground">
+                      {source.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
                       Last sync: {source.lastSync.toLocaleTimeString('en-US', { 
                         hour: '2-digit', 
                         minute: '2-digit' 
@@ -252,8 +252,9 @@ const TransactionImporter = () => {
                       onClick={() => syncSource(source.id)}
                       variant="ghost" 
                       size="sm"
+                      disabled={smsLoading}
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      {source.status === 'permission_needed' ? 'Allow SMS' : <RefreshCw className="w-4 h-4" />}
                     </Button>
                   )}
                 </div>
@@ -262,7 +263,7 @@ const TransactionImporter = () => {
               {source.status === 'syncing' && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Importing transactions...</span>
+                    <span>Parsing SMS messages...</span>
                     <span>{syncProgress}%</span>
                   </div>
                   <Progress value={syncProgress} className="h-2" />
@@ -277,7 +278,13 @@ const TransactionImporter = () => {
 
               {source.status === 'error' && (
                 <div className="text-sm text-destructive">
-                  Failed to sync. Check your connection and try again.
+                  Failed to parse SMS. Check permissions and try again.
+                </div>
+              )}
+
+              {source.status === 'permission_needed' && (
+                <div className="text-sm text-warning">
+                  SMS permission required to parse transaction messages.
                 </div>
               )}
             </div>
@@ -285,18 +292,32 @@ const TransactionImporter = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-2 border-warning/20 bg-warning/5">
+      <Card className="border-2 border-info/20 bg-info/5">
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
-            <Smartphone className="w-5 h-5 text-warning mt-0.5" />
+            <Smartphone className="w-5 h-5 text-info mt-0.5" />
             <div>
-              <h3 className="font-medium text-warning">SMS Permission Required</h3>
+              <h3 className="font-medium text-info">How SMS Parsing Works</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                For Android devices, grant SMS permission to automatically parse transaction notifications from your payment apps.
+                This app automatically parses transaction alerts from banks and UPI apps like HDFC, SBI, ICICI, Google Pay, PhonePe, and Paytm. 
+                It extracts amount, merchant, and UPI details from SMS notifications.
               </p>
-              <Button variant="outline" size="sm" className="mt-3">
-                Grant Permission
-              </Button>
+              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                <p>✅ Works with all major banks and UPI apps</p>
+                <p>✅ No API setup required</p>
+                <p>✅ Works offline once SMS is received</p>
+                <p>✅ Lightweight and secure</p>
+              </div>
+              {!hasPermission && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3"
+                  onClick={requestSMSPermission}
+                >
+                  Grant SMS Permission
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
