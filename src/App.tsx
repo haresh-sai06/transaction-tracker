@@ -11,6 +11,7 @@ import { Accounts } from "./pages/Accounts";
 import { Trends } from "./pages/Trends";
 import { Profile } from "./pages/Profile";
 import { Settings } from "./pages/Settings";
+import { TransactionHistory } from "./pages/TransactionHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,11 @@ const App = () => (
           <Route path="/settings" element={
             <ProtectedRoute fallback={<Auth />}>
               <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/transactions" element={
+            <ProtectedRoute fallback={<Auth />}>
+              <TransactionHistory />
             </ProtectedRoute>
           } />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

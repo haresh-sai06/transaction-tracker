@@ -289,42 +289,6 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
         {/* Transaction Import Status */}
         <TransactionImporter />
 
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Recent Transactions</CardTitle>
-              <Button variant="ghost" size="sm">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="max-h-64 overflow-y-auto">
-              {filteredTransactions.slice(0, 20).map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 border-b last:border-b-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-destructive/10 rounded-lg flex items-center justify-center">
-                      <ArrowUp className="w-4 h-4 text-destructive" />
-                    </div>
-                    <div>
-                      <p className="font-medium">₹{transaction.amount.toFixed(2)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {transaction.date.toLocaleDateString()} • {transaction.source}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {transaction.date.toLocaleTimeString('en-US', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {filteredTransactions.length === 0 && (
           <Card>

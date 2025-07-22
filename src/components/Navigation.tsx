@@ -10,7 +10,8 @@ import {
   Settings, 
   User,
   LogOut,
-  TrendingUp
+  TrendingUp,
+  History
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils'
 
 const menuItems = [
   { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/transactions', label: 'Transaction History', icon: History },
   { href: '/analytics', label: 'Analytics', icon: PieChart },
   { href: '/accounts', label: 'Accounts', icon: CreditCard },
   { href: '/trends', label: 'Trends', icon: TrendingUp },
