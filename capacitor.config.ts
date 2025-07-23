@@ -16,7 +16,29 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
       showSpinner: true,
       spinnerColor: '#22c55e'
+    },
+    StatusBar: {
+      style: 'Default',
+      backgroundColor: '#ffffff'
+    },
+    Keyboard: {
+      resize: 'ionic',
+      resizeOnFullScreen: true
+    },
+    App: {
+      launchUrl: '',
+      iosScheme: 'App',
+      androidScheme: 'https'
     }
+  },
+  android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: false
+  },
+  ios: {
+    contentInset: 'automatic',
+    scrollEnabled: true
   }
 };
 

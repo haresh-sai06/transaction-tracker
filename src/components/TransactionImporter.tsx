@@ -1,116 +1,98 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { 
-  Smartphone, 
-  Wifi, 
+  MessageSquare, 
+  Shield, 
   CheckCircle, 
-  AlertCircle, 
-  Loader2,
-  RefreshCw,
-  CreditCard
+  XCircle, 
+  Clock,
+  Smartphone,
+  RefreshCw
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useSMSParser } from '@/hooks/useSMSParser';
+import { useNativeSMS } from '@/hooks/useNativeSMS';
+import { useMobileOptimizations } from '@/hooks/useMobileOptimizations';
 
 interface ImportSource {
   id: string;
   name: string;
-  status: 'connected' | 'syncing' | 'error' | 'offline' | 'permission_needed';
-  lastSync: Date;
-  transactionsFound: number;
   description: string;
+  status: 'connected' | 'disconnected' | 'syncing' | 'error';
+  lastSync: Date | null;
+  transactionCount: number;
+  icon: any;
 }
 
 const TransactionImporter = () => {
-  const { toast } = useToast();
   const { 
     isLoading: smsLoading, 
-    hasPermission, 
-    checkSMSPermission, 
+    hasPermission: smsPermission, 
     requestSMSPermission, 
-    parseStoredSMS, 
-    setupSMSListener 
+    parseStoredSMS 
   } = useSMSParser();
   
-  const [sources, setSources] = useState<ImportSource[]>([]);
-  const [syncProgress, setSyncProgress] = useState(0);
+  const {
+    hasPermission: nativePermission,
+    isListening,
+    capabilities,
+    requestSMSPermission: requestNativePermission,
+    readStoredSMS,
+    startSMSListener
+  } = useNativeSMS();
+  
+  const { isMobile, platform } = useMobileOptimizations();
+
+  const [importSources, setImportSources] = useState<ImportSource[]>([
+    {
+      id: 'sms',
+      name: isMobile ? 'Native SMS Parsing' : 'SMS Parsing (Demo)',
+      description: isMobile 
+        ? 'Read transaction SMS directly from your device' 
+        : 'Demo of SMS transaction parsing',
+      status: 'disconnected',
+      lastSync: null,
+      transactionCount: 0,
+      icon: isMobile ? Smartphone : MessageSquare
+    }
+  ]);
+
+  const [syncProgress, setSyncProgress] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const initializeSources = async () => {
-      await checkSMSPermission();
-      
-      const initialSources: ImportSource[] = [
-        {
-          id: 'hdfc_sms',
-          name: 'HDFC Bank SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 30 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from HDFC Bank SMS alerts'
-        },
-        {
-          id: 'sbi_sms',
-          name: 'SBI Bank SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 45 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from SBI Bank SMS alerts'
-        },
-        {
-          id: 'icici_sms',
-          name: 'ICICI Bank SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 20 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from ICICI Bank SMS alerts'
-        },
-        {
-          id: 'gpay_sms',
-          name: 'Google Pay SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 15 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from Google Pay SMS notifications'
-        },
-        {
-          id: 'phonepe_sms',
-          name: 'PhonePe SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 25 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from PhonePe SMS notifications'
-        },
-        {
-          id: 'paytm_sms',
-          name: 'Paytm SMS',
-          status: hasPermission ? 'connected' : 'permission_needed',
-          lastSync: new Date(Date.now() - 35 * 60 * 1000),
-          transactionsFound: 0,
-          description: 'Parse UPI transactions from Paytm SMS notifications'
-        }
-      ];
-      
-      setSources(initialSources);
-    };
-
-    initializeSources();
-  }, [checkSMSPermission, hasPermission]);
+    // Update SMS source status based on permissions
+    setImportSources(prev => prev.map(source => {
+      if (source.id === 'sms') {
+        const hasAnyPermission = isMobile ? nativePermission : smsPermission;
+        return {
+          ...source,
+          status: hasAnyPermission ? 'connected' : 'disconnected',
+          name: isMobile ? 'Native SMS Parsing' : 'SMS Parsing (Demo)',
+          description: isMobile 
+            ? hasAnyPermission 
+              ? 'Reading transaction SMS directly from your device'
+              : 'Requires SMS permission to read transaction messages'
+            : 'Demo of SMS transaction parsing with sample data'
+        };
+      }
+      return source;
+    }));
+  }, [smsPermission, nativePermission, isMobile]);
 
   const getStatusIcon = (status: ImportSource['status']) => {
     switch (status) {
       case 'connected':
         return <CheckCircle className="w-4 h-4 text-success" />;
       case 'syncing':
-        return <Loader2 className="w-4 h-4 text-info animate-spin" />;
+        return <RefreshCw className="w-4 h-4 text-info animate-spin" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-destructive" />;
-      case 'permission_needed':
-        return <Smartphone className="w-4 h-4 text-warning" />;
-      case 'offline':
-        return <Wifi className="w-4 h-4 text-muted-foreground" />;
+        return <XCircle className="w-4 h-4 text-destructive" />;
+      case 'disconnected':
+        return <Clock className="w-4 h-4 text-muted-foreground" />;
+      default:
+        return <Shield className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -122,129 +104,150 @@ const TransactionImporter = () => {
         return 'bg-info/10 text-info border-info/20';
       case 'error':
         return 'bg-destructive/10 text-destructive border-destructive/20';
-      case 'permission_needed':
-        return 'bg-warning/10 text-warning border-warning/20';
-      case 'offline':
+      case 'disconnected':
+        return 'bg-muted text-muted-foreground';
+      default:
         return 'bg-muted text-muted-foreground';
     }
   };
 
   const syncSource = async (sourceId: string) => {
-    const source = sources.find(s => s.id === sourceId);
-    if (!source) return;
-
-    // Check if permission is needed
-    if (source.status === 'permission_needed') {
-      const granted = await requestSMSPermission();
-      if (!granted) return;
+    if (sourceId === 'sms') {
+      setSyncProgress(prev => ({ ...prev, [sourceId]: 0 }));
       
-      setSources(prev => 
-        prev.map(s => 
-          s.id === sourceId 
-            ? { ...s, status: 'connected' as const }
-            : s
-        )
-      );
-    }
+      // Update source status to syncing
+      setImportSources(prev => prev.map(source => 
+        source.id === sourceId ? { ...source, status: 'syncing' } : source
+      ));
 
-    // Start syncing
-    setSources(prev => 
-      prev.map(s => 
-        s.id === sourceId 
-          ? { ...s, status: 'syncing' as const }
-          : s
-      )
-    );
-
-    // Simulate sync progress
-    setSyncProgress(0);
-    const interval = setInterval(() => {
-      setSyncProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
+      try {
+        let hasPermission = isMobile ? nativePermission : smsPermission;
+        
+        if (!hasPermission) {
+          // Request permission
+          hasPermission = isMobile 
+            ? await requestNativePermission()
+            : await requestSMSPermission();
+          
+          if (!hasPermission) {
+            setImportSources(prev => prev.map(source => 
+              source.id === sourceId ? { ...source, status: 'error' } : source
+            ));
+            return;
+          }
         }
-        return prev + 25;
-      });
-    }, 200);
 
-    try {
-      const result = await parseStoredSMS();
-      
-      setSources(prev => 
-        prev.map(s => 
-          s.id === sourceId 
-            ? { 
-                ...s, 
-                status: 'connected' as const,
-                lastSync: new Date(),
-                transactionsFound: result.parsed
-              }
-            : s
-        )
-      );
-    } catch (error) {
-      setSources(prev => 
-        prev.map(s => 
-          s.id === sourceId 
-            ? { ...s, status: 'error' as const }
-            : s
-        )
-      );
+        // Simulate progress
+        for (let i = 0; i <= 100; i += 20) {
+          setSyncProgress(prev => ({ ...prev, [sourceId]: i }));
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        // Parse SMS messages
+        let result;
+        if (isMobile && capabilities.canReadSMS) {
+          // Use native SMS reading
+          const messages = await readStoredSMS();
+          result = { parsed: messages.length };
+        } else {
+          // Use web SMS parser
+          result = await parseStoredSMS();
+        }
+
+        // Update source with results
+        setImportSources(prev => prev.map(source => 
+          source.id === sourceId ? {
+            ...source,
+            status: 'connected',
+            lastSync: new Date(),
+            transactionCount: result.parsed
+          } : source
+        ));
+
+        // Start real-time listening if on mobile
+        if (isMobile && capabilities.canReadSMS && !isListening) {
+          await startSMSListener();
+        }
+
+      } catch (error) {
+        console.error('Sync error:', error);
+        setImportSources(prev => prev.map(source => 
+          source.id === sourceId ? { ...source, status: 'error' } : source
+        ));
+      } finally {
+        setSyncProgress(prev => ({ ...prev, [sourceId]: 100 }));
+      }
     }
   };
 
   const syncAll = async () => {
-    // First request permission if needed
-    if (!hasPermission) {
-      const granted = await requestSMSPermission();
-      if (!granted) return;
-    }
-
-    // Then sync all sources
-    for (const source of sources.filter(s => s.status !== 'syncing')) {
-      await syncSource(source.id);
-      // Small delay between syncs
-      await new Promise(resolve => setTimeout(resolve, 300));
+    for (const source of importSources) {
+      if (source.status !== 'syncing') {
+        await syncSource(source.id);
+        // Small delay between syncs
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">SMS Transaction Tracking</CardTitle>
-            <Button onClick={syncAll} variant="outline" size="sm" disabled={smsLoading}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Parse All SMS
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {sources.map((source) => (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center">
+            <MessageSquare className="w-5 h-5 mr-2" />
+            Transaction Import
+            {isMobile && (
+              <Badge variant="outline" className="ml-2">
+                {platform.toUpperCase()}
+              </Badge>
+            )}
+          </CardTitle>
+          <Button onClick={syncAll} variant="outline" size="sm" disabled={smsLoading}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Sync All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {importSources.map((source) => {
+          const IconComponent = source.icon;
+          const progress = syncProgress[source.id] || 0;
+          
+          return (
             <div key={source.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Smartphone className="w-5 h-5 text-muted-foreground" />
+                  <IconComponent className="w-5 h-5 text-muted-foreground" />
                   <div>
-                    <h3 className="font-medium">{source.name}</h3>
+                    <h3 className="font-medium flex items-center">
+                      {source.name}
+                      {isListening && source.id === 'sms' && isMobile && (
+                        <Badge variant="secondary" className="ml-2 text-xs">
+                          Live Monitoring
+                        </Badge>
+                      )}
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       {source.description}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Last sync: {source.lastSync.toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
+                    {source.lastSync && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Last sync: {source.lastSync.toLocaleTimeString('en-US', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline" className={getStatusColor(source.status)}>
                     {getStatusIcon(source.status)}
-                    <span className="ml-1 capitalize">{source.status}</span>
+                    <span className="ml-1 capitalize">
+                      {source.status === 'disconnected' ? 'Setup Required' : source.status}
+                    </span>
                   </Badge>
                   
                   {source.status !== 'syncing' && (
@@ -254,7 +257,10 @@ const TransactionImporter = () => {
                       size="sm"
                       disabled={smsLoading}
                     >
-                      {source.status === 'permission_needed' ? 'Allow SMS' : <RefreshCw className="w-4 h-4" />}
+                      {source.status === 'disconnected' 
+                        ? isMobile ? 'Enable SMS' : 'Demo Parse'
+                        : <RefreshCw className="w-4 h-4" />
+                      }
                     </Button>
                   )}
                 </div>
@@ -263,66 +269,77 @@ const TransactionImporter = () => {
               {source.status === 'syncing' && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Parsing SMS messages...</span>
-                    <span>{syncProgress}%</span>
+                    <span>
+                      {isMobile ? 'Reading device SMS...' : 'Parsing demo messages...'}
+                    </span>
+                    <span>{progress}%</span>
                   </div>
-                  <Progress value={syncProgress} className="h-2" />
+                  <Progress value={progress} className="h-2" />
                 </div>
               )}
 
-              {source.transactionsFound > 0 && source.status === 'connected' && (
-                <div className="text-sm text-muted-foreground">
-                  Found {source.transactionsFound} new transaction{source.transactionsFound !== 1 ? 's' : ''}
+              {source.transactionCount > 0 && source.status === 'connected' && (
+                <div className="text-sm text-success">
+                  ✅ Found {source.transactionCount} transaction{source.transactionCount !== 1 ? 's' : ''}
                 </div>
               )}
 
               {source.status === 'error' && (
                 <div className="text-sm text-destructive">
-                  Failed to parse SMS. Check permissions and try again.
-                </div>
-              )}
-
-              {source.status === 'permission_needed' && (
-                <div className="text-sm text-warning">
-                  SMS permission required to parse transaction messages.
+                  ❌ {isMobile 
+                    ? 'Failed to access SMS. Check permissions in device settings.'
+                    : 'Error parsing messages. Please try again.'
+                  }
                 </div>
               )}
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          );
+        })}
 
-      <Card className="border-2 border-info/20 bg-info/5">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <Smartphone className="w-5 h-5 text-info mt-0.5" />
-            <div>
-              <h3 className="font-medium text-info">How SMS Parsing Works</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                This app automatically parses transaction alerts from banks and UPI apps like HDFC, SBI, ICICI, Google Pay, PhonePe, and Paytm. 
-                It extracts amount, merchant, and UPI details from SMS notifications.
-              </p>
-              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                <p>✅ Works with all major banks and UPI apps</p>
-                <p>✅ No API setup required</p>
-                <p>✅ Works offline once SMS is received</p>
-                <p>✅ Lightweight and secure</p>
+        {/* Mobile-specific information */}
+        {isMobile && (
+          <div className="mt-4 p-4 bg-info/5 border border-info/20 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <Smartphone className="w-5 h-5 text-info mt-0.5" />
+              <div>
+                <h3 className="font-medium text-info">Mobile SMS Parsing</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Running on {platform} with native SMS capabilities. The app can read transaction 
+                  alerts directly from your device and automatically track expenses.
+                </p>
+                <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                  <p>✅ Real-time transaction monitoring</p>
+                  <p>✅ Works with all major banks & UPI apps</p>
+                  <p>✅ Automatic categorization</p>
+                  <p>✅ Secure local processing</p>
+                </div>
               </div>
-              {!hasPermission && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3"
-                  onClick={requestSMSPermission}
-                >
-                  Grant SMS Permission
-                </Button>
-              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        )}
+
+        {/* Web demo information */}
+        {!isMobile && (
+          <div className="mt-4 p-4 bg-warning/5 border border-warning/20 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <MessageSquare className="w-5 h-5 text-warning mt-0.5" />
+              <div>
+                <h3 className="font-medium text-warning">Demo Mode</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You're viewing a demo of SMS parsing. On Android devices, this app can read 
+                  real SMS messages to automatically track your UPI transactions.
+                </p>
+                <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                  <p>📱 Export as Android APK for full functionality</p>
+                  <p>🔒 Requires SMS permission on mobile</p>
+                  <p>⚡ Real-time expense tracking</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
