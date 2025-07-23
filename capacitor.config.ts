@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'auto-track-money',
   webDir: 'dist',
   server: {
-    url: 'https://6fc43d36-9040-4f96-85b5-a091200fe435.lovableproject.com?forceHideBadge=true',
+    url: 'https://transaction-tracker-one.vercel.app/',
     cleartext: true
   },
   plugins: {
