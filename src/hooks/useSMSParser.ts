@@ -23,57 +23,113 @@ export const useSMSParser = () => {
   const [hasPermission, setHasPermission] = useState(false);
   const { toast } = useToast();
 
-  // SMS patterns for different banks and UPI apps
+  // Enhanced SMS patterns for different banks and UPI apps with better regex
   const smsPatterns = {
-    // HDFC Bank pattern
-    hdfc: /INR\s*([\d,]+\.?\d*)\s*has\s*been\s*(debited|credited)\s*from.*?UPI[\/:]*([\w@.-]*)/i,
+    // HDFC Bank patterns
+    hdfc: [
+      /INR\s*([\d,]+\.?\d*)\s*(?:has\s*been\s*)?(debited|credited)\s*(?:from|to).*?(?:UPI[\/:]?|towards\s+UPI[\/:]?)\s*([\w@.-]*)/i,
+      /Rs\.?\s*([\d,]+\.?\d*)\s*(?:has\s*been\s*)?(debited|credited).*?(?:UPI|towards).*?([\w@.-]*)/i
+    ],
     
-    // SBI pattern
-    sbi: /Rs\.?\s*([\d,]+\.?\d*)\s*(debited|credited).*?UPI.*?to\s*([\w\s@.-]*)/i,
+    // SBI Bank patterns
+    sbi: [
+      /Rs\.?\s*([\d,]+\.?\d*)\s*(debited|credited).*?UPI.*?(?:to|from)\s*([\w\s@.-]*)/i,
+      /₹\s*([\d,]+\.?\d*)\s*(?:has\s*been\s*)?(debited|credited).*?UPI.*?([\w@.-]*)/i
+    ],
     
-    // ICICI pattern
-    icici: /Rs\s*([\d,]+\.?\d*)\s*(debited|credited).*?UPI.*?([\w@.-]*)/i,
+    // ICICI Bank patterns
+    icici: [
+      /Rs\.?\s*([\d,]+\.?\d*)\s*(debited|credited).*?UPI.*?([\w@.-]*)/i,
+      /INR\s*([\d,]+\.?\d*)\s*(debited|credited).*?UPI.*?([\w@.-]*)/i
+    ],
     
-    // Google Pay pattern
-    gpay: /You\s*(paid|received)\s*₹([\d,]+\.?\d*)\s*(?:to|from)\s*(.*?)\s*using\s*UPI/i,
+    // Axis Bank patterns
+    axis: [
+      /Rs\.?\s*([\d,]+\.?\d*)\s*(?:has\s*been\s*)?(debited|credited).*?UPI.*?([\w@.-]*)/i
+    ],
     
-    // PhonePe pattern
-    phonepe: /₹([\d,]+\.?\d*)\s*(paid|received).*?(?:to|from)\s*(.*?)\s*via\s*PhonePe/i,
+    // Google Pay patterns
+    gpay: [
+      /You\s*(paid|received)\s*₹([\d,]+\.?\d*)\s*(?:to|from)\s*(.*?)\s*(?:using\s*UPI|via\s*UPI)/i,
+      /₹([\d,]+\.?\d*)\s*(?:paid|received).*?(?:to|from)\s*(.*?)\s*.*?Google\s*Pay/i
+    ],
     
-    // Paytm pattern
-    paytm: /₹([\d,]+\.?\d*)\s*(paid|sent|received).*?(?:to|from)\s*(.*?)\s*via\s*Paytm/i,
+    // PhonePe patterns
+    phonepe: [
+      /₹([\d,]+\.?\d*)\s*(paid|received).*?(?:to|from)\s*(.*?)\s*(?:via\s*PhonePe|using\s*PhonePe)/i,
+      /You\s*(paid|received)\s*₹([\d,]+\.?\d*)\s*(?:to|from)\s*(.*?)\s*.*?PhonePe/i
+    ],
     
-    // Generic UPI pattern
-    generic: /(?:₹|Rs\.?|INR)\s*([\d,]+\.?\d*)\s*.*?(debit|credit|paid|received).*?UPI.*?([\w@.-]*)/i
+    // Paytm patterns
+    paytm: [
+      /₹([\d,]+\.?\d*)\s*(paid|sent|received).*?(?:to|from)\s*(.*?)\s*(?:via\s*Paytm|using\s*Paytm)/i,
+      /You\s*(paid|received)\s*₹([\d,]+\.?\d*)\s*(?:to|from)\s*(.*?)\s*.*?Paytm/i
+    ],
+    
+    // BHIM UPI patterns
+    bhim: [
+      /₹([\d,]+\.?\d*)\s*(paid|received).*?(?:to|from)\s*(.*?)\s*.*?BHIM/i
+    ],
+    
+    // Generic UPI patterns (fallback)
+    generic: [
+      /(?:₹|Rs\.?|INR)\s*([\d,]+\.?\d*)\s*.*?(debit|credit|paid|received).*?UPI.*?([\w@.-]*)/i,
+      /UPI.*?(?:₹|Rs\.?|INR)\s*([\d,]+\.?\d*)\s*.*?(debit|credit|paid|received).*?([\w@.-]*)/i
+    ]
   };
 
   const checkSMSPermission = useCallback(async () => {
     try {
-      // For web/PWA, we'll simulate permission granted
-      // In actual mobile app, you'd use Capacitor Permissions plugin
-      setHasPermission(true);
-      return true;
+      // Check if running on mobile (Capacitor)
+      if ((window as any).Capacitor) {
+        // On mobile, assume permission needs to be granted manually
+        setHasPermission(false);
+        return false;
+      } else {
+        // For web/PWA, simulate permission check
+        setHasPermission(true);
+        return true;
+      }
     } catch (error) {
       console.error('Error checking SMS permission:', error);
+      setHasPermission(false);
       return false;
     }
   }, []);
 
   const requestSMSPermission = useCallback(async () => {
     try {
-      // For web/PWA, we'll simulate permission request
-      // In actual mobile app, you'd request READ_SMS permission
-      toast({
-        title: "SMS Permission",
-        description: "SMS permission would be requested on mobile device",
-      });
-      setHasPermission(true);
-      return true;
+      // Check if running on mobile (Capacitor)
+      if ((window as any).Capacitor) {
+        toast({
+          title: "SMS Permission Required",
+          description: "Please enable SMS permission manually in your Android device settings under App Permissions > SMS",
+          variant: "destructive",
+        });
+        
+        // For now, simulate permission granted for demo
+        setHasPermission(true);
+        
+        toast({
+          title: "SMS Permission Setup",
+          description: "Manual SMS permission setup required on mobile devices",
+        });
+        
+        return true;
+      } else {
+        // For web/PWA, simulate permission request
+        toast({
+          title: "SMS Permission (Demo Mode)",
+          description: "On Android devices, this would request READ_SMS permission for automatic transaction tracking",
+        });
+        setHasPermission(true);
+        return true;
+      }
     } catch (error) {
       console.error('Error requesting SMS permission:', error);
       toast({
         title: "Permission Error",
-        description: "Failed to request SMS permission",
+        description: "Failed to request SMS permission. Please enable manually in device settings.",
         variant: "destructive",
       });
       return false;
@@ -83,22 +139,46 @@ export const useSMSParser = () => {
   const parseSMSMessage = useCallback((message: string, sender: string): SMSTransaction | null => {
     const cleanMessage = message.replace(/\s+/g, ' ').trim();
     
-    // Try each pattern
-    for (const [bankName, pattern] of Object.entries(smsPatterns)) {
-      const match = cleanMessage.match(pattern);
-      if (match) {
-        const amount = parseFloat(match[1].replace(/,/g, ''));
-        const type = match[2].toLowerCase().includes('debit') || match[2].toLowerCase().includes('paid') ? 'debit' : 'credit';
-        const merchant = match[3] || 'Unknown';
-        
-        return {
-          amount,
-          merchant: merchant.trim(),
-          date: new Date(),
-          type,
-          bankName: bankName.toUpperCase(),
-          upiId: match[3]?.includes('@') ? match[3] : undefined
-        };
+    // Try each bank's patterns
+    for (const [bankName, patterns] of Object.entries(smsPatterns)) {
+      for (const pattern of patterns) {
+        const match = cleanMessage.match(pattern);
+        if (match) {
+          // Extract amount (first capture group for most patterns)
+          let amount = 0;
+          let type: 'debit' | 'credit' = 'debit';
+          let merchant = 'Unknown';
+          
+          // Handle different pattern structures
+          if (bankName === 'gpay' || bankName === 'phonepe' || bankName === 'paytm' || bankName === 'bhim') {
+            // For UPI apps: ₹amount action merchant
+            amount = parseFloat(match[2]?.replace(/,/g, '') || match[1]?.replace(/,/g, ''));
+            type = match[1]?.toLowerCase().includes('paid') || match[2]?.toLowerCase().includes('paid') ? 'debit' : 'credit';
+            merchant = match[3] || 'Unknown';
+          } else {
+            // For banks: amount action UPI/merchant
+            amount = parseFloat(match[1].replace(/,/g, ''));
+            type = match[2].toLowerCase().includes('debit') || match[2].toLowerCase().includes('paid') ? 'debit' : 'credit';
+            merchant = match[3] || 'Unknown';
+          }
+          
+          // Clean merchant name
+          merchant = merchant.trim()
+            .replace(/^(to|from)\s+/i, '')
+            .replace(/\s*(using|via|UPI|-).*$/i, '')
+            .trim();
+          
+          if (amount > 0) {
+            return {
+              amount,
+              merchant,
+              date: new Date(),
+              type,
+              bankName: bankName.toUpperCase(),
+              upiId: match[3]?.includes('@') ? match[3] : undefined
+            };
+          }
+        }
       }
     }
     
@@ -124,6 +204,18 @@ export const useSMSParser = () => {
         {
           body: "₹150 paid to Zomato via PhonePe UPI",
           sender: "PHONEPE"
+        },
+        {
+          body: "Rs. 89.00 debited from A/c **1234 on 23-Jul-25 to UPI/zomato@paytm. Available Balance: Rs. 4,567.89",
+          sender: "SBI"
+        },
+        {
+          body: "₹300 received from John Doe via Paytm UPI. Ref: PTM123456789",
+          sender: "PAYTM"
+        },
+        {
+          body: "ICICI Bank: Rs 125.50 debited for UPI/swiggy@icici on 23-Jul-25. Available Bal: Rs 2,345.67",
+          sender: "ICICI"
         }
       ];
 
