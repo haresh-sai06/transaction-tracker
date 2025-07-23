@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.6fc43d3690404f9685b5a091200fe435',
+  appId: 'com.haresh.transactiontracker',
   appName: 'auto-track-money',
   webDir: 'dist',
   server: {
