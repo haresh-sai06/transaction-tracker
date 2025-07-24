@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Navigation } from '@/components/Navigation'
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts'
+import { useMobileActions } from '@/hooks/useMobileActions'
 import { Plus, CreditCard, Trash2, RefreshCw, CheckCircle, XCircle } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
@@ -23,6 +24,7 @@ const paymentProviders = [
 
 export const Accounts = () => {
   const { accounts, loading, addAccount, toggleAccount, removeAccount } = usePaymentAccounts()
+  const { connectAccount, refreshAccounts } = useMobileActions()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [newAccount, setNewAccount] = useState({
     provider: '',
@@ -33,6 +35,8 @@ export const Accounts = () => {
     e.preventDefault()
     if (!newAccount.provider || !newAccount.accountName) return
 
+    await connectAccount(newAccount.provider, newAccount.accountName)
+    
     const { error } = await addAccount(newAccount.provider, newAccount.accountName)
     if (!error) {
       setNewAccount({ provider: '', accountName: '' })
@@ -239,7 +243,7 @@ export const Accounts = () => {
                             </span>
                           </div>
 
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={refreshAccounts}>
                             <RefreshCw className="h-4 w-4" />
                           </Button>
 

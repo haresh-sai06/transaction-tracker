@@ -34,31 +34,6 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b sticky top-0 z-10">
-        <div className="max-w-md mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold">Expense Tracker</h1>
-              <p className="text-sm text-muted-foreground">Track your spending</p>
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={refreshTransactions}
-                disabled={isRefreshing}
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onSettingsClick}>
-                <Settings className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-md mx-auto p-4 space-y-6">
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
@@ -102,16 +77,6 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
         {/* Transaction Import Status */}
         <TransactionImporter />
 
-        {/* Welcome Message */}
-        <Card>
-          <CardContent className="p-6 text-center">
-            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-medium mb-2">Welcome to SMS Expense Tracker</h3>
-            <p className="text-sm text-muted-foreground">
-              Enable SMS parsing to automatically track your UPI transactions from bank and payment app notifications.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
