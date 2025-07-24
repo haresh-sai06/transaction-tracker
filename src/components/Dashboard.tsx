@@ -77,16 +77,6 @@ const Dashboard = ({ onSettingsClick }: DashboardProps) => {
         {/* Transaction Import Status */}
         <TransactionImporter />
 
-        {/* Welcome Message */}
-        <Card>
-          <CardContent className="p-6 text-center">
-            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-medium mb-2">Welcome to SMS Expense Tracker</h3>
-            <p className="text-sm text-muted-foreground">
-              Enable SMS parsing to automatically track your UPI transactions from bank and payment app notifications.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

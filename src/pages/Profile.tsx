@@ -10,6 +10,7 @@ import { Navigation } from '@/components/Navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
+import { useMobileActions } from '@/hooks/useMobileActions'
 import { User, Mail, Shield, Globe, Camera, Save } from 'lucide-react'
 
 const currencies = [
@@ -19,6 +20,7 @@ const currencies = [
 export const Profile = () => {
   const { user } = useAuth()
   const { toast } = useToast()
+  const { saveProfileChanges, changePassword, exportData } = useMobileActions()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.full_name || '',
@@ -32,6 +34,8 @@ export const Profile = () => {
     setLoading(true)
 
     try {
+      await saveProfileChanges(profile)
+      
       const { error } = await supabase.auth.updateUser({
         data: {
           full_name: profile.fullName,
@@ -41,10 +45,6 @@ export const Profile = () => {
 
       if (error) throw error
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been saved successfully.",
-      })
     } catch (error) {
       console.error('Error updating profile:', error)
       toast({
@@ -269,7 +269,7 @@ export const Profile = () => {
                     Last updated: {new Date().toLocaleDateString()}
                   </p>
                 </div>
-                <Button variant="outline">
+                <Button variant="outline" onClick={changePassword}>
                   Change Password
                 </Button>
               </div>
@@ -321,7 +321,7 @@ export const Profile = () => {
                     Download a copy of your transaction data
                   </p>
                 </div>
-                <Button variant="outline">
+                <Button variant="outline" onClick={exportData}>
                   Export
                 </Button>
               </div>

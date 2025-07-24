@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
+import { Label } from '@/components/ui/label'
 import { Navigation } from '@/components/Navigation'
 import { useToast } from '@/hooks/use-toast'
+import { useMobileActions } from '@/hooks/useMobileActions'
 import { 
   Bell, 
   Smartphone, 
@@ -23,6 +25,7 @@ import {
 
 export const Settings = () => {
   const { toast } = useToast()
+  const { exportData, clearCache, enableBiometric } = useMobileActions()
   const [settings, setSettings] = useState({
     notifications: {
       pushEnabled: true,
@@ -62,17 +65,15 @@ export const Settings = () => {
   }
 
   const handleExportData = () => {
-    toast({
-      title: "Export started",
-      description: "Your data export will be ready shortly.",
-    })
+    exportData()
   }
 
   const handleClearCache = () => {
-    toast({
-      title: "Cache cleared",
-      description: "App cache has been cleared successfully.",
-    })
+    clearCache()
+  }
+
+  const handleEnableBiometric = () => {
+    enableBiometric()
   }
 
   const containerVariants = {
@@ -449,12 +450,15 @@ export const Settings = () => {
                 </div>
                 <Switch
                   checked={settings.privacy.biometricAuth}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      handleEnableBiometric()
+                    }
                     setSettings(prev => ({
                       ...prev,
                       privacy: { ...prev.privacy, biometricAuth: checked }
                     }))
-                  }
+                  }}
                 />
               </div>
             </CardContent>
@@ -524,10 +528,3 @@ export const Settings = () => {
     </div>
   )
 }
-
-// Label component (if not already defined)
-const Label = ({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-  <label className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${className}`} {...props}>
-    {children}
-  </label>
-)
