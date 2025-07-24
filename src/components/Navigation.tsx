@@ -75,6 +75,7 @@ export const Navigation = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
@@ -207,7 +208,7 @@ export const Navigation = () => {
       </AnimatePresence>
 
       {/* Content spacer */}
-      <div className="h-16" />
+      <div className="h-16" style={{ paddingTop: 'env(safe-area-inset-top)' }} />
     </>
   )
 }
