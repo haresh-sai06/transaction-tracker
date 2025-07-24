@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import AccountLinking from '@/components/AccountLinking';
 import Dashboard from '@/components/Dashboard';
-import { TransactionHistory } from '@/components/TransactionHistory';
 import { Navigation } from '@/components/Navigation';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -74,7 +73,6 @@ const Index = () => {
       >
         <div className="space-y-8">
           <Dashboard onSettingsClick={handleShowSettings} />
-          <TransactionHistory />
         </div>
       </motion.div>
     </div>
