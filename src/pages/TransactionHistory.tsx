@@ -267,10 +267,10 @@ export const TransactionHistory = () => {
           <Card className="shadow-sm">
             <CardContent className="p-4">
               <div className="space-y-3">
-                {/* Dropdowns in a single row */}
-                <div className="flex flex-row gap-3">
+                {/* Mobile-optimized filter layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="h-12">
                       <SelectValue placeholder="Select period" />
                     </SelectTrigger>
                     <SelectContent>
@@ -282,7 +282,7 @@ export const TransactionHistory = () => {
                     </SelectContent>
                   </Select>
                   <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="h-12">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -292,7 +292,7 @@ export const TransactionHistory = () => {
                     </SelectContent>
                   </Select>
                   <Select value={sortOrder} onValueChange={(value: any) => setSortOrder(value)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="h-12">
                       <SelectValue placeholder="Order" />
                     </SelectTrigger>
                     <SelectContent>
@@ -301,17 +301,15 @@ export const TransactionHistory = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {/* Search bar in the next row */}
-                <div className="flex w-full">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search transactions..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8"
-                    />
-                  </div>
+                {/* Search bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by merchant, amount, or category..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-12 text-base"
+                  />
                 </div>
               </div>
             </CardContent>
