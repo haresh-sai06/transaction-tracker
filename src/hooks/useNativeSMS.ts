@@ -64,13 +64,27 @@ export const useNativeSMS = () => {
     }
 
     try {
-      // Show explanatory dialog first
-      const { value } = await Dialog.confirm({
-        title: 'SMS Permission Required',
-        message: 'This app needs access to your SMS messages to automatically parse transaction details and track expenses. Your privacy is protected - we only read transaction-related messages.',
-        okButtonTitle: 'Grant Permission',
-        cancelButtonTitle: 'Not Now'
-      });
+      // Check if we're on mobile first
+      if (!Capacitor.isNativePlatform()) {
+        setHasPermission(true);
+        return true;
+      }
+
+      // Show explanatory dialog first - wrap in try-catch for safety
+      let dialogResult;
+      try {
+        dialogResult = await Dialog.confirm({
+          title: 'SMS Permission Required',
+          message: 'This app needs access to your SMS messages to automatically parse transaction details and track expenses. Your privacy is protected - we only read transaction-related messages.',
+          okButtonTitle: 'Grant Permission',
+          cancelButtonTitle: 'Not Now'
+        });
+      } catch (error) {
+        console.error('Dialog error:', error);
+        return false;
+      }
+      
+      const { value } = dialogResult;
 
       if (!value) {
         toast({

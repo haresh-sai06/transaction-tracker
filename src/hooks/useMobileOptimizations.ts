@@ -64,10 +64,8 @@ export const useMobileOptimizations = () => {
             platform
           });
 
-          toast({
-            title: "Mobile Mode Detected",
-            description: `Running on ${platform} device with native capabilities`,
-          });
+          // Remove toast on initialization to prevent crashes
+          console.log(`Mobile mode detected: ${platform}`);
         } else {
           // Web mode
           setCapabilities({
