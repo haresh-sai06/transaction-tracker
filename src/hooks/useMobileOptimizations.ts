@@ -81,7 +81,7 @@ export const useMobileOptimizations = () => {
     };
 
     initializeMobile();
-  }, [toast]);
+  }, []); // Remove toast dependency to prevent re-initialization
 
   const requestNotificationPermission = async () => {
     try {
