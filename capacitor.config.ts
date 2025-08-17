@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.haresh.transactiontracker',
-  appName: 'auto-track-money',
+  appName: 'Transaction Tracker',
   webDir: 'dist',
   server: {
     url: 'https://transaction-tracker-one.vercel.app/',
