@@ -119,4 +119,47 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Mobile safe area support */
+  .pt-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mt-safe-top {
+    margin-top: env(safe-area-inset-top);
+  }
+
+  .mb-safe-bottom {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Mobile viewport fixes */
+  .min-h-screen-mobile {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+
+  /* Mobile-specific styles */
+  @media (max-width: 768px) {
+    .container {
+      @apply px-4;
+    }
+    
+    body {
+      @apply overscroll-none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    html, body {
+      height: 100%;
+      height: -webkit-fill-available;
+      overflow-x: hidden;
+    }
+  }
 }
